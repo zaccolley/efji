@@ -79,10 +79,7 @@ h1 {
 	background: grey;
 }
 
-.button:focus {
-	outline: 3px solid blue;
-}
-
+.button:focus,
 .button:hover,
 .button:active{
 	outline: 3px solid 272727;
