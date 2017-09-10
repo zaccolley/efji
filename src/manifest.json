@@ -1,10 +1,10 @@
 {
-  "name": "efji | colour matching game",
-  "short_name": "efji",
+  "name": "🍓 🍏 🍕 food flood 🍌 🍔 🍆 | colour matching game",
+  "short_name": "food flood",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#fff",
-  "description": "A colour matching game that's really cool wow.",
+  "background_color": "#272727",
+  "description": "A colour matching game with food",
   "icons": [{
     "src": "icons/48.png",
     "sizes": "48x48",

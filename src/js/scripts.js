@@ -1,31 +1,48 @@
 document.addEventListener('DOMContentLoaded', main);
 
-const amountOfColoursToGenerate = 6; // amount of colours to generate from the seed
+const items = [
+  { icon: '🍓', hue: 114 },
+  { icon: '🍏', hue: 354 },
+  { icon: '🍕', hue: 241 },
+  { icon: '🍌', hue: 286 },
+  { icon: '🍔', hue: 174 },
+  { icon: '🍆', hue:  54 }
+];
+
+function hueToColor(hue) {
+  if (hue > 360) {
+    hue = hue - 360;
+  }
+  return `hsl(${hue}, 70%, 60%)`;
+}
 
 const state = {
-	colours: [],
-
 	tiles: [],
 	tileAmount: 2, // amount of tiles on grid on one axis
 	tileSize: null,
-	
+
 	canvasContext: null,
 
-	tryCount: 0,
+  initialTryCount: 5,
+	tryCount: 5,
 
 	windowWidth: window.outerWidth,
+
+  endResult: ''
 };
 
 function main() {
 	const buttonEls = document.querySelectorAll('.button');
 	const overlayEl = document.querySelector('.overlay');
+	const overlayHeadingEl = document.querySelector('.overlay-heading');
 	const overlayMessageEl = document.querySelector('.overlay-message');
 	const overlayButtonEl = document.querySelector('.overlay-button');
+  const messageEl = document.querySelector('.message');
 
 	buttonEls.forEach(tile => {
 		tile.addEventListener('click', e => {
-			const colourId = parseInt(e.target.value, 10);
-			buttonHandler(colourId);
+			const id = parseInt(e.target.value, 10);
+			buttonHandler(id);
 		})
 	});
 
@@ -47,18 +64,27 @@ function main() {
 		canvas.width = windowWidth;
 		canvas.height = windowWidth;
 
+    state.canvasContext.fillStyle = '#f5f5f5';
+		state.canvasContext.fillRect(0, 0, windowWidth, windowWidth);
+
 		state.tileSize = Math.round(windowWidth / tileAmount);
 
-		// generate the colours and tiles
-		genColours();
-		genItems();
+    applyButtonColours();
 
-		const intialColour = tiles[0][0].colourId;
-		
+		generateTiles();
+
+    messageEl.innerHTML = '<p><strong>food flood</strong></p>';
+
+		const intialColour = state.tiles[0][0].id;
+
 		// affect the tiles and decide which tiles are active
-		affectItems(intialColour);
-		drawGrid();	
+		setAdjacentTilesWithCorrectColourActive(0, 0, intialColour);
+		drawGrid();
 	}
+
+  function checkLose() {
+    return state.tryCount <= 0;
+  }
 
 	function checkWin() {
 		const { tiles } = state;
@@ -78,24 +104,53 @@ function main() {
 		return allActive;
 	}
 
-	function buttonHandler(colourId) {
-		affectItems(colourId);
+  function decreaseTries(amount) {
+    state.tryCount = state.tryCount - amount;
+  }
+
+	function buttonHandler(id) {
+    for (let x = 0; x < state.tiles.length; x++) {
+      for (let y = 0; y < state.tiles[x].length; y++ ) {
+        const tile = state.tiles[x][y];
+        if (tile.active) {
+          setAdjacentTilesWithCorrectColourActive(x, y, id);
+        }
+      }
+    }
+
 		drawGrid();
 
-		state.tryCount++;
+		decreaseTries(1);
+    messageEl.innerHTML = `<p><strong>${state.tryCount} tries</strong> left</p>`;
 
 		if (checkWin()) {
 			overlayEl.style.display = 'flex';
-			overlayMessageEl.innerHTML = `You did it in ${state.tryCount} tries.`;
+      overlayEl.classList.remove('overlay--dark');
+			overlayHeadingEl.innerHTML = '🎉 You win!';
+			overlayMessageEl.innerHTML = `You did it with <strong>${state.tryCount} tries </strong> left`;
+      state.endResult = 'win';
 		}
+    else if(checkLose()) {
+			overlayEl.style.display = 'flex';
+      overlayEl.classList.add('overlay--dark');
+			overlayHeadingEl.innerHTML = '😞 You lost...';
+			overlayMessageEl.innerHTML = '<strong>Try again!</strong>';
+      state.endResult = 'lose';
+    }
 	}
 
 	// progression or refresh of a game
 	function overlayButtonHandler() {
-		state.tileAmount += 1;
-		state.tryCount = 0;
+    if (state.endResult === 'win') {
+	    state.tileAmount += 1;
+      state.initialTryCount = Math.ceil(2.5 * (state.tileAmount - 1));
+    }
 
+    state.tryCount = state.initialTryCount;
+
+    messageEl.innerHTML = '<p>Fill the screen with one colour</p>';
 		overlayEl.style.display = 'none';
+    overlayEl.classList.remove('overlay--dark');
 
 		game(false);
 	}
@@ -112,43 +167,32 @@ function main() {
 	}
 
 	// decides which squares are active
-	function affectItems(colourId) {
-		const { tiles, tileAmount } = state;
+	function setAdjacentTilesWithCorrectColourActive(x, y, id) {
+		state.tiles[x][y].id = id; // the original squares colour
 
-		for (let x = 0; x < tileAmount; x++) {
-			for (let y = 0; y < tileAmount; y++) {
-				const tile = tiles[x][y];
+    const neighbourItemPositions = [
+      { x:  0, y: -1}, // top
+      { x:  1, y:  0}, // right
+      { x:  0, y:  1}, // bottom
+      { x: -1, y:  0}, // left
+    ];
 
-				if (!tile.active) {
-					continue;
-				}
+    for (let j = 0; j < neighbourItemPositions.length; j++) {
+      const neighbourItemPosition = neighbourItemPositions[j];
+      const neighbourX = x + neighbourItemPosition.x;
+      const neighbourY = y + neighbourItemPosition.y;
 
-				tiles[x][y].colourId = colourId; // the original squares colour
+      if (!isXYInBounds(neighbourX, neighbourY)) {
+        continue;
+      }
 
-				const neighbourItemPositions = [
-					{ x:  0, y: -1}, // top
-					{ x:  1, y:  0}, // right
-					{ x:  0, y:  1}, // bottom
-					{ x: -1, y:  0}, // left
-				];
+      const neighbourItem = state.tiles[neighbourX][neighbourY];
 
-				for (let j = 0; j < neighbourItemPositions.length; j++) {
-					const neighbourItemPosition = neighbourItemPositions[j];
-					const neighbourX = x + neighbourItemPosition.x;
-					const neighbourY = y + neighbourItemPosition.y;
-
-					if (!isXYInBounds(neighbourX, neighbourY)) {
-						continue;
-					}
-					
-					const neighbourItem = tiles[neighbourX][ neighbourY];
-
-					if (!neighbourItem.active && neighbourItem.colourId === colourId) {
-						neighbourItem.active = true;
-					}
-				}
-			}
-		}
+      if (!neighbourItem.active && neighbourItem.id === id) {
+        neighbourItem.active = true;
+        setAdjacentTilesWithCorrectColourActive(neighbourX, neighbourY, id);
+      }
+    }
 	}
 
 	// draw the tiles to the canvas
@@ -159,89 +203,70 @@ function main() {
 			for (let y = 0; y < tiles[x].length; y++) {
 				const tile = tiles[x][y];
 
-				const colour = state.colours[tile.colourId];
-				drawSquare(tileSize, x * tileSize, y * tileSize, colour);
-
-				// if the square is active then add a pattern to indicate so
-				if (tile.active) {
-					drawPattern(tileSize, x * tileSize, y * tileSize);
-				}
-			}		
+        const item = items[tile.id];
+				drawTile(tileSize, x * tileSize, y * tileSize, item, tile.active);
+			}
 		}
 	}
 
-	function drawPattern(size, originX, originY) {
+	function drawTile(size, originX, originY, item, active) {
 		const { canvasContext } = state;
 
-		canvasContext.fillStyle = 'rgba(255, 255, 255, 0.5)'
-		canvasContext.fillRect(
-			Math.floor(originX + size / 4),
-			Math.floor(originY + size / 4),
-			Math.floor(size / 2),
-			Math.floor(size / 2)
-		);
-	}
-
-	function drawSquare(size, originX, originY, colour) {
-		const { canvasContext } = state;
-
-		canvasContext.fillStyle = colour;
+    canvasContext.fillStyle = hueToColor(item.hue);
 		canvasContext.fillRect(
 			Math.floor(originX),
 			Math.floor(originY),
 			Math.floor(size),
 			Math.floor(size)
 		);
+
+    if (active) {
+      canvasContext.fillStyle = 'rgba(245, 245, 245, 0.65)';
+      const margin = size * 0.075;
+      canvasContext.beginPath();
+      canvasContext.arc(
+        originX + (size / 2),
+        originY + (size / 2),
+        (size / 2) - margin,
+        0,
+        360
+      );
+      canvasContext.closePath();
+      canvasContext.fill();
+    }
+
+    canvasContext.fillStyle = '#272727';
+    const fontSize = size / 2;
+    canvasContext.font = `${fontSize}px serif`;
+    canvasContext.fillText(item.icon, originX + (size / 6), originY + fontSize + (size / 6));
 	}
 
-	function genItems() {
-		const { colours, tiles, tileAmount } = state;
+	function generateTiles() {
+		const { tiles, tileAmount } = state;
 
 		for (let x = 0; x < tileAmount; x++) {
 			tiles[x] = [];
 
 			for (let y = 0; y < tileAmount; y++) {
-				const colourId = Math.floor(Math.random() * colours.length);
+				const id = Math.floor(Math.random() * items.length);
 				const active = (x === 0 && y === 0);
 
-				tiles[x][y] = { colourId, active };
+				tiles[x][y] = { id, active };
 			}
 		}
 
 		// start with a standard pattern
-		tiles[0][0].colourId = 0;
-		tiles[1][0].colourId = 1;
-		tiles[0][1].colourId = 2;
-		tiles[1][1].colourId = 3;
-	}
-
-	function genColours() {
-		// reset
-		state.colours = [];
-
-		const { colours } = state;
-
-		const colourSeed = Math.floor(Math.random() * 360); // random colour seed
-
-		for (let i = 0; i < amountOfColoursToGenerate; i++) {
-			let hue = (colourSeed + (i * (360 / amountOfColoursToGenerate)));
-			const saturation = 60;
-			const lightness = 60;
-
-			if (hue >= 360) { hue -= 360; }
-			
-			const colour = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-			colours.push(colour)
-		}
-
-		applyButtonColours();
+		tiles[0][0].id = 0;
+		tiles[1][0].id = 1;
+		tiles[0][1].id = 2;
+		tiles[1][1].id = 3;
 	}
 
 	function applyButtonColours() {
-		const { colours } = state;
-
 		buttonEls.forEach((element, i) => {
-			element.style.backgroundColor = colours[i];
+      const item = items[i];
+			element.style.backgroundColor = hueToColor(item.hue);
+      element.innerHTML = item.icon;
 		});
 	}
 }

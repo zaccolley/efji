@@ -1,16 +1,16 @@
 {
-  "name": "efji",
-  "version": "1.0.0",
-  "description": "",
+  "name": "food-flood",
+  "version": "2.0.0",
+  "description": "A colour matching game with food",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy": "surge --project ./src --domain efji.surge.sh"
+    "start": "serve ./src",
+    "deploy": "surge --project ./src --domain foodflood.surge.sh"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Zac Colley",
   "devDependencies": {
-    "surge": "^0.19.0"
+    "surge": "^0.19.0",
+    "serve": "^6.0.6"
   }
 }
