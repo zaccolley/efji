@@ -1,5 +1,5 @@
 {
-  "name": "food-flood",
+  "name": "foodflood",
   "version": "2.0.0",
   "description": "A colour matching game with food",
   "main": "index.js",
