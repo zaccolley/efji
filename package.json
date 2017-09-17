@@ -1,6 +1,6 @@
 {
   "name": "foodflood",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "A colour matching game with food",
   "main": "index.js",
   "scripts": {
