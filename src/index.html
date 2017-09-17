@@ -2,19 +2,28 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>🍓 🍏 🍕 food flood 🍌 🍔 🍆</title>
-	<link rel="stylesheet" type="text/css" href="css/styles.css">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <title>food flood 🍏🍓💧🍌🌰🍆</title>
+
 	<link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#272727">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+
+	<link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
 	<main>
-		<canvas id="canvas"></canvas>
-
 		<section class="message">
 			<p>Loading...</p>
 		</section>
+
+    <div class="canvas-wrapper">
+  		<canvas id="canvas"></canvas>
+    </div>
 
 		<section class="buttons">
 			<div class="button-row">
@@ -29,13 +38,21 @@
 			</div>
 		</section>
 
-		<div class="overlay">
+    <div class="overlay overlay--dark overlay--instructions" style="display: flex;">
+			<span class="overlay-heading">food flood</span>
+      <p class="overlay-message">I tried writing instructions but they didn't make sense.</p>
+      <p class="overlay-message"><strong>Just click things until you work it out...</strong></p>
+      <p class="overlay-message">🍏🍓💧🍌🌰🍆</p>
+			<button class="overlay-button">Start the game!</button>
+		</div>
+
+		<div class="overlay overlay--result">
 			<span class="overlay-heading">🎉 You win!</span>
 			<p class="overlay-message">You're doing really well</p>
 			<button class="overlay-button">Continue</button>
 		</div>
 	</main>
 
-	<script src="js/scripts.js"></script>
+	<script src="scripts.js"></script>
 </body>
 </html>

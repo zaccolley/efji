@@ -1,19 +1,39 @@
+function redirectToHttps() {
+  if (window.location.protocol != 'https:') {
+    window.location.replace(location.href.replace('http://', 'https://'));
+  }
+}
+redirectToHttps();
+
 document.addEventListener('DOMContentLoaded', main);
 
 const items = [
-  { icon: '🍓', hue: 114 },
-  { icon: '🍏', hue: 354 },
-  { icon: '🍕', hue: 241 },
-  { icon: '🍌', hue: 286 },
-  { icon: '🍔', hue: 174 },
-  { icon: '🍆', hue:  54 }
+  { name: 'apple', color: 'hsl(86, 62%, 45%)' },
+  { name: 'strawberry', color: 'hsl(5, 63%, 54%)' },
+  { name: 'droplet', color: 'hsl(200, 86%, 49%)' },
+  { name: 'banana', color: 'hsl(44, 91%, 46%)' },
+  { name: 'chestnut', color: 'hsl(18, 91%, 21%)' },
+  { name: 'eggplant', color: 'hsl(304, 29%, 46%)' },
 ];
 
-function hueToColor(hue) {
-  if (hue > 360) {
-    hue = hue - 360;
+function loadImages() {
+  const imagesToLoad = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+
+    const imageToLoad = new Promise(resolve => {
+      const image = new Image();
+      image.src = `images/${item.name}.png`;
+      image.addEventListener('load',  resolve);
+
+      item.image = image;
+    });
+
+    imagesToLoad.push(imageToLoad);
   }
-  return `hsl(${hue}, 70%, 60%)`;
+
+  return Promise.all(imagesToLoad);
 }
 
 const state = {
@@ -33,11 +53,25 @@ const state = {
 
 function main() {
 	const buttonEls = document.querySelectorAll('.button');
-	const overlayEl = document.querySelector('.overlay');
-	const overlayHeadingEl = document.querySelector('.overlay-heading');
-	const overlayMessageEl = document.querySelector('.overlay-message');
-	const overlayButtonEl = document.querySelector('.overlay-button');
+
+  const instructionsOverlayEl = document.querySelector('.overlay--instructions');
+  const instructionsOverlayButtonEl = instructionsOverlayEl.querySelector('.overlay-button');
+
+  instructionsOverlayButtonEl.addEventListener('click', handleInstructionsOverlayButtonElClick);
+  function handleInstructionsOverlayButtonElClick() {
+    instructionsOverlayEl.style.display = 'none';
+  }
+
+  const overlayEl = document.querySelector('.overlay--result');
+	const overlayHeadingEl = overlayEl.querySelector('.overlay-heading');
+	const overlayMessageEl = overlayEl.querySelector('.overlay-message');
+	const overlayButtonEl = overlayEl.querySelector('.overlay-button');
+
   const messageEl = document.querySelector('.message');
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js');
+  }
 
 	buttonEls.forEach(tile => {
 		tile.addEventListener('click', e => {
@@ -48,7 +82,9 @@ function main() {
 
 	overlayButtonEl.addEventListener('click', overlayButtonHandler);
 
-	game();
+  loadImages().then(() => {
+	   game();
+  });
 
 	function game() {
 		const { tiles, tileAmount, windowWidth } = state;
@@ -60,7 +96,7 @@ function main() {
 			alert('Your browser doesn\'t support canvas. :(');
 		}
 
-		state.canvasContext = canvas.getContext('2d');
+		state.canvasContext = canvas.getContext('2d', { alpha: false });
 		canvas.width = windowWidth;
 		canvas.height = windowWidth;
 
@@ -126,14 +162,14 @@ function main() {
 		if (checkWin()) {
 			overlayEl.style.display = 'flex';
       overlayEl.classList.remove('overlay--dark');
-			overlayHeadingEl.innerHTML = '🎉 You win!';
+			overlayHeadingEl.innerHTML = 'You win!';
 			overlayMessageEl.innerHTML = `You did it with <strong>${state.tryCount} tries </strong> left`;
       state.endResult = 'win';
 		}
     else if(checkLose()) {
 			overlayEl.style.display = 'flex';
       overlayEl.classList.add('overlay--dark');
-			overlayHeadingEl.innerHTML = '😞 You lost...';
+			overlayHeadingEl.innerHTML = 'You lost...';
 			overlayMessageEl.innerHTML = '<strong>Try again!</strong>';
       state.endResult = 'lose';
     }
@@ -212,7 +248,7 @@ function main() {
 	function drawTile(size, originX, originY, item, active) {
 		const { canvasContext } = state;
 
-    canvasContext.fillStyle = hueToColor(item.hue);
+    canvasContext.fillStyle = item.color;
 		canvasContext.fillRect(
 			Math.floor(originX),
 			Math.floor(originY),
@@ -221,24 +257,25 @@ function main() {
 		);
 
     if (active) {
+      const activeMargin = size * 0.10;
       canvasContext.fillStyle = 'rgba(245, 245, 245, 0.65)';
-      const margin = size * 0.075;
-      canvasContext.beginPath();
-      canvasContext.arc(
-        originX + (size / 2),
-        originY + (size / 2),
-        (size / 2) - margin,
-        0,
-        360
-      );
-      canvasContext.closePath();
-      canvasContext.fill();
+      canvasContext.fillRect(
+  			Math.floor(originX + activeMargin),
+  			Math.floor(originY + activeMargin),
+  			Math.floor(size - (activeMargin * 2)),
+  			Math.floor(size - (activeMargin * 2))
+  		);
     }
 
-    canvasContext.fillStyle = '#272727';
-    const fontSize = size / 2;
-    canvasContext.font = `${fontSize}px serif`;
-    canvasContext.fillText(item.icon, originX + (size / 6), originY + fontSize + (size / 6));
+    const imageMargin = size * 0.15;
+    const image = items.find(i => i.name === item.name).image;
+    canvasContext.drawImage(
+      image,
+      Math.floor(originX + imageMargin),
+      Math.floor(originY + imageMargin),
+      Math.floor(size - (imageMargin * 2)),
+      Math.floor(size - (imageMargin * 2))
+    );
 	}
 
 	function generateTiles() {
@@ -265,8 +302,9 @@ function main() {
 	function applyButtonColours() {
 		buttonEls.forEach((element, i) => {
       const item = items[i];
-			element.style.backgroundColor = hueToColor(item.hue);
-      element.innerHTML = item.icon;
+      element.innerHTML = item.name;
+			element.style.backgroundColor = item.color;
+      element.style.backgroundImage = `url('${item.image.src}')`;
 		});
 	}
 }

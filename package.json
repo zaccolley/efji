@@ -1,16 +1,28 @@
 {
   "name": "foodflood",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "A colour matching game with food",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "serve ./src",
-    "deploy": "surge --project ./src --domain foodflood.surge.sh"
+
+    "deploy": "npm run build && npm run surge",
+
+    "surge": "surge --project ./dist --domain foodflood.surge.sh",
+
+    "build": "npm run clean && npm run copy && npm run minify",
+    "copy": "cp -r src/* dist",
+    "clean": "rm -r dist && mkdir dist",
+    "minify": "npm run minify:css && npm run minify:js",
+    "minify:css": "cleancss --output src/styles.css src/styles.css",
+    "minify:js": "minify dist/scripts.js --out-file dist/scripts.js"
   },
   "author": "Zac Colley",
   "devDependencies": {
-    "surge": "^0.19.0",
-    "serve": "^6.0.6"
+    "babel-minify": "^0.2.0",
+    "clean-css-cli": "^4.1.9",
+    "serve": "^6.0.6",
+    "surge": "^0.19.0"
   }
 }

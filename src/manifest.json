@@ -1,17 +1,31 @@
 {
-  "name": "🍓 🍏 🍕 food flood 🍌 🍔 🍆 | colour matching game",
+  "name": "food flood 🍏🍓💧🍌🌰🍆",
   "short_name": "food flood",
+  "description": "A colour matching game with food",
+  "author": "Zac Colley",
+
   "start_url": ".",
   "display": "standalone",
+  "orientation": "portrait",
+
+  "theme_color": "#272727",
   "background_color": "#272727",
-  "description": "A colour matching game with food",
-  "icons": [{
-    "src": "icons/48.png",
-    "sizes": "48x48",
-    "type": "image/png"
-  }, {
-    "src": "icons/192.png",
-    "sizes": "192x192",
-    "type": "image/png"
-  }]
+
+  "icons": [
+    {
+      "src": "icons/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/android-chrome-256x256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
